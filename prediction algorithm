@@ -1,0 +1,151 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
+
+import pandas as pd
+# Visualisation libraries
+import matplotlib.pyplot as plt
+get_ipython().run_line_magic('matplotlib', 'inline')
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+import folium
+from folium import plugins
+# Manipulating the default plot size
+plt.rcParams['figure.figsize'] = 10, 12
+# Disable warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+
+# In[2]:
+
+
+df= pd.read_csv('us_confirmed_csv.csv')
+df_us_confirmed = df.copy()
+df_us_confirmed
+
+
+# In[3]:
+
+
+df1= pd.read_csv('worldwide-aggregated_csv.csv')
+df_world_agg = df1.copy()
+df1
+
+
+# In[4]:
+
+
+from fbprophet import Prophet
+confirmed = df1.groupby('Date').sum()['Confirmed'].reset_index()
+deaths = df1.groupby('Date').sum()['Deaths'].reset_index()
+recovered = df1.groupby('Date').sum()['Recovered'].reset_index()
+
+
+# In[5]:
+
+
+confirmed.columns = ['ds','y']
+#confirmed['ds'] = confirmed['ds'].dt.date
+confirmed['ds'] = pd.to_datetime(confirmed['ds'])
+confirmed.tail()
+
+
+# In[6]:
+
+
+m = Prophet(interval_width=0.95) 
+m.fit(confirmed) 
+future = m.make_future_dataframe(periods=25) 
+future
+
+
+# In[7]:
+
+
+forecast = m.predict(future)
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+
+
+# In[8]:
+
+
+confirmed_forecast_plot = m.plot(forecast)
+
+
+# In[9]:
+
+
+confirmed_forecast_plot =m.plot_components(forecast)
+
+
+# In[10]:
+
+
+m = Prophet(interval_width=0.99) 
+m.fit(confirmed) 
+future = m.make_future_dataframe(periods=22) 
+future
+forecast = m.predict(future)
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+confirmed_forecast_plot = m.plot(forecast)
+confirmed_forecast_plot =m.plot_components(forecast)
+
+
+# In[11]:
+
+
+fig = go.Figure()
+#Plotting datewise confirmed cases
+fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines+markers', name='Confirmed',line=dict(color='blue', width=2)))
+
+
+# In[12]:
+
+
+deaths.columns = ['ds','y']
+deaths['ds'] = pd.to_datetime(deaths['ds'])
+m = Prophet(interval_width=0.99) 
+m.fit(deaths) 
+future = m.make_future_dataframe(periods=22) 
+future
+forecast = m.predict(future)
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+confirmed_forecast_plot = m.plot(forecast)
+confirmed_forecast_plot =m.plot_components(forecast)
+
+
+# In[13]:
+
+
+fig = go.Figure()
+#Plotting datewise confirmed cases
+fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines+markers', name='recovered',line=dict(color='red', width=2)))
+
+
+# In[14]:
+
+
+recovered.columns = ['ds','y']
+deaths['ds'] = pd.to_datetime(deaths['ds'])
+m = Prophet(interval_width=0.99) 
+m.fit(recovered) 
+future = m.make_future_dataframe(periods=22) 
+future
+forecast = m.predict(future)
+forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']]
+confirmed_forecast_plot = m.plot(forecast)
+confirmed_forecast_plot =m.plot_components(forecast)
+fig = go.Figure()
+#Plotting datewise confirmed cases
+fig.add_trace(go.Scatter(x=forecast['ds'], y=forecast['yhat'], mode='lines+markers', name='recovered',line=dict(color='green', width=2)))
+
+
+# In[ ]:
+
+
+
+
